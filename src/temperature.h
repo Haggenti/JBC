@@ -31,6 +31,9 @@ public:
     double getAutoTuneProgress();
     bool getPOnM() { return pOnM; }
     void setPOnM(bool enabled);
+    void setWindupGuard(double guard) { windupGuard = guard; }
+    double getWindupGuard() { return windupGuard; }
+    bool isOutputSaturated() { return outputSaturated; }
 
 private:
     OneWire oneWire;
@@ -61,6 +64,10 @@ private:
     unsigned long autoTuneStart;
     double autoTuneTemp;
     bool pOnM;          // État de P_ON_M
+    double integralTerm;     // For tracking integral term
+    double lastError;        // For anti-windup calculations
+    bool outputSaturated;    // Track output saturation
+    double windupGuard;      // Limit for integral term
 };
 
 extern TemperatureControl tempControl;

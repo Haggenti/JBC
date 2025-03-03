@@ -21,7 +21,11 @@ TemperatureControl::TemperatureControl() :
     autoTuning(false),
     autoTuneStart(0),
     autoTuneTemp(0),
-    pOnM(true)  // P_ON_M activé par défaut
+    pOnM(true),  // P_ON_M activé par défaut
+    integralTerm(0),
+    lastError(0),
+    outputSaturated(false),
+    windupGuard(100)  // Default to 100% as maximum
 {
     for(int i = 0; i < TEMP_FILTER_SAMPLES; i++) {
         tempBuffer[i] = 20.0;
@@ -80,7 +84,31 @@ void TemperatureControl::update() {
     } else {
         // Normal PID mode
         if (errorState == NO_ERROR) {
-            myPID.Compute();
+            // Calculate PID with anti-windup
+            double error = setPoint - currentTemp;
+            
+            // Proportional term
+            double pTerm = Kp * (pOnM ? -currentTemp : error);
+            
+            // Integral term with anti-windup
+            if (!outputSaturated) {
+                integralTerm += Ki * error;
+                // Apply windup guard
+                integralTerm = constrain(integralTerm, -windupGuard, windupGuard);
+            }
+            
+            // Derivative term
+            double dTerm = -Kd * (currentTemp - lastTemp);
+            
+            // Calculate output
+            outputPower = pTerm + integralTerm + dTerm;
+            
+            // Check for saturation
+            double lastOutput = outputPower;
+            outputPower = constrain(outputPower, 0, 100);
+            outputSaturated = (outputPower != lastOutput);
+            
+            lastError = error;
         }
     }
 
@@ -99,6 +127,13 @@ void TemperatureControl::updateSimulatedTemp() {
 
 void TemperatureControl::setPIDTunings(double p, double i, double d) {
     Kp = p; Ki = i; Kd = d;
+    
+    // Update windup guard based on tunings
+    windupGuard = 100.0 / Ki;  // Adjust based on integral gain
+    
+    // Reset integral term when tunings change
+    integralTerm = 0;
+    
     myPID.SetTunings(Kp, Ki, Kd, pOnM ? P_ON_M : P_ON_E);
 }
 

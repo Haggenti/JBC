@@ -1,0 +1,15 @@
+[Binary PNG file - Image representation of the Fritzing schematic]
+
+Layout structure:
+1. Arduino Nano at center
+2. Power rails (5V and GND) on both sides
+3. Components organized by function:
+   - Left side: Sensors and control (DS18B20, Encoder)
+   - Right side: Displays (LCD, TM1637s)
+   - Bottom: Output devices (SSR, LED, Buzzer)
+4. Clear labeling of all pins and connections
+5. Color coding:
+   - Red: 5V power
+   - Black: Ground
+   - Yellow: Data/Signal
+   - Blue: I2C
